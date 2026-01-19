@@ -1,0 +1,195 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat    = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String?
+  username   String   @unique
+
+  profile    Profile?
+
+  videoProjects VideoProject[]
+  editorResumes EditorResume[]
+
+  FavoritesVideoProject FavoriteVideoProject[]
+  FavoritesEditorResume FavoriteEditorResume[]
+
+  ReviewsPublished  Review[]
+  
+  
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  userId    Int     @unique 
+  name      String 
+  bio       String
+  avatarUrl String
+  createdAt DateTime @default(now())
+  isCreator  Boolean  @default(false)
+  isEditor   Boolean  @default(false)
+
+  Reviews   Review[] 
+
+  user      User     @relation(fields: [userId], references: [id])
+
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  profileId   Int
+  publisherId Int
+  rating      Int
+  comment     String? 
+  createdAt   DateTime @default(now())
+
+  Profile   Profile @relation(fields: [profileId], references: [id])
+  publisher User @relation(fields: [publisherId], references: [id])
+
+  @@index([profileId])
+  @@index([publisherId])
+
+}
+
+
+
+model VideoProject {
+  id          Int      @id @default(autoincrement())
+  userId      Int      
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      Int      @default(0)
+  title       String
+  description String
+  price_min   Float
+  price_max   Float
+  views       Int      @default(0)
+
+  tags       TagsVideoProject[]
+  bonusCategories bonusCategoryVideoProject []
+  Favorites FavoriteVideoProject[]
+
+  user     User @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([status, price_min])
+  @@index([status, updatedAt])
+
+}
+
+model TagsVideoProject {
+  id              Int      @id @default(autoincrement())
+  VideoProjectId  Int   
+  name            String   
+
+  videoProject VideoProject @relation(fields: [VideoProjectId], references: [id])
+  @@unique([VideoProjectId, name])
+
+  @@index([VideoProjectId])
+
+}
+
+model TagsEditorResume {
+  id              Int      @id @default(autoincrement())
+  EditorResumeId  Int   
+  name            String   
+
+  editorResume EditorResume @relation(fields: [EditorResumeId], references: [id])
+  @@unique([EditorResumeId, name])
+  
+  @@index([EditorResumeId])
+
+}
+
+model bonusCategoryVideoProject {
+  id            Int      @id @default(autoincrement())
+  videoProjectId Int    
+  title         String   
+  description   String
+  
+  videoProject    VideoProject? @relation(fields: [videoProjectId], references: [id])
+  
+  @@index([videoProjectId])
+
+}
+
+model bonusCategoryEditorResume {
+  id            Int      @id @default(autoincrement())
+  editorResumeId Int    
+  title         String   
+  description   String
+  
+  editorResume    EditorResume? @relation(fields: [editorResumeId], references: [id])
+  
+
+  @@index([editorResumeId])
+}
+
+model EditorResume {
+  id          Int      @id @default(autoincrement())
+  userId    Int   
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      Int      @default(0)
+  title       String
+  description String
+  views       Int      @default(0)
+
+  bonusCategories bonusCategoryEditorResume[]
+  tools          Tools[]
+  Favorites FavoriteEditorResume[]
+  tags       TagsEditorResume[]
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status, updatedAt])
+  
+}
+
+model Tools{
+  id          Int      @id @default(autoincrement())
+  editorResumeId Int
+  name        String   
+
+  editorResume EditorResume @relation(fields: [editorResumeId], references: [id])
+
+  @@index([editorResumeId])
+}
+
+model FavoriteVideoProject {
+  userId         Int
+  videoProjectId Int
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  videoProject VideoProject @relation(fields: [videoProjectId], references: [id])
+
+  @@id([userId, videoProjectId])
+}
+
+model FavoriteEditorResume {
+  userId          Int
+  editorResumeId  Int
+  createdAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  editorResume EditorResume @relation(fields: [editorResumeId], references: [id])
+
+  @@id([userId, editorResumeId])
+}
+
